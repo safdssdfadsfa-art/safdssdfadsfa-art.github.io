@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>研学导师角色构建台 - 打造你的“六边形战士”</title>
+    <style>
+        :root {
+            --color-s: #d32f2f; /* S级红 */
+            --color-a: #f57c00; /* A级橙 */
+            --color-b: #388e3c; /* B级绿 */
+            --color-n: #7b1fa2; /* N级紫 */
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+
+        /* 顶部状态栏 */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 15px 25px;
+            background: #e3f2fd;
+            border-radius: 12px;
+            border-left: 6px solid #2196f3;
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .status-bar h2 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        .points-display {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2196f3;
+        }
+
+        .points-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        /* 区域标题 */
+        .section-title {
+            font-size: 1.3em;
+            margin: 25px 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+
+        .tier-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            color: white;
+            font-size: 0.8em;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        /* 特质网格 */
+        .traits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 15px;
+        }
+
+        /* 特质卡片 */
+        .trait-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            background: #fff;
+        }
+
+        .trait-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .trait-card.selected {
+            border-color: #2196f3;
+            background-color: #e3f2fd;
+        }
+
+        /* 不同层级的卡片样式 */
+        .tier-s .trait-card.selected { border-color: var(--color-s); background-color: #ffebee; }
+        .tier-a .trait-card.selected { border-color: var(--color-a); background-color: #fff3e0; }
+        .tier-b .trait-card.selected { border-color: var(--color-b); background-color: #e8f5e9; }
+        .tier-n .trait-card { border-style: dashed; }
+        .tier-n .trait-card.selected { border-color: var(--color-n); background-color: #f3e5f5; }
+
+
+        .trait-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .trait-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .trait-cost {
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        .cost-pay { color: #d32f2f; background: #ffebee; }
+        .cost-gain { color: #388e3c; background: #e8f5e9; }
+
+        .trait-desc {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        /* 底部按钮 */
+        .footer-action {
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        #finishBtn {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background 0.3s;
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        #finishBtn:hover { background: #1976d2; }
+        #finishBtn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+
+        /* 提示信息 */
+        #message-box {
+            text-align: center;
+            margin-top: 15px;
+            color: #d32f2f;
+            font-weight: bold;
+            min-height: 24px;
+        }
+
+        /* 结果弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .modal.show { display: flex; opacity: 1; }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .close-btn {
+            position: absolute; top: 15px; right: 20px;
+            font-size: 24px; cursor: pointer; color: #999;
+        }
+        .result-list { margin-left: 20px; }
+        .result-item { margin-bottom: 8px; }
+        .item-s { color: var(--color-s); font-weight: bold; }
+        .item-a { color: var(--color-a); }
+        .item-b { color: var(--color-b); }
+        .item-n { color: var(--color-n); font-style: italic; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="status-bar">
+        <h2>导师角色构建台</h2>
+        <div>
+            <span class="points-label">剩余天赋点 (DP)：</span>
+            <span id="points-display" class="points-display">30</span>
+        </div>
+    </div>
+
+    <div id="app">
+        </div>
+
+    <div id="message-box"></div>
+
+    <div class="footer-action">
+        <button id="finishBtn" onclick="finishBuild()">完成构建，生成角色卡</button>
+        <p style="color: #666; font-size: 0.9em; margin-top: 10px;">(规则：至少选1个S级；N级最多选2个)</p>
+    </div>
+</div>
+
+<div id="resultModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h2 style="text-align: center; color: #2196f3;">你的研学导师角色卡</h2>
+        <div id="resultBody"></div>
+        <button onclick="closeModal()" style="width: 100%; margin-top: 20px; padding: 12px; background: #2196f3; color: white; border: none; border-radius: 8px; cursor: pointer;">关闭并截图保存</button>
+    </div>
+</div>
+
+<script>
+    // --- 配置区域：特质数据库 ---
+    const traitsDB = {
+        S: {
+            name: "S级：核心基石",
+            cost: 8,
+            color: "var(--color-s)",
+            desc: "立身之本，缺了就塌房。",
+            items: [
+                { id: "s1", name: "坚如磐石的安全意识", desc: "对风险有雷达般的嗅觉，学生少根头发你都睡不着。" },
+                { id: "s2", name: "无条件的爱与耐心", desc: "面对第100次提问依然微笑解答，视如己出。" },
+                { id: "s3", name: "绝对的职业操守", desc: "无论多累多烦，永远情绪稳定，不传递负能量。" }
+            ]
+        },
+        A: {
+            name: "A级：专业赋能",
+            cost: 5,
+            color: "var(--color-a)",
+            desc: "从“保姆”升级为“名师”的关键。",
+            items: [
+                { id: "a1", name: "百科全书式知识储备", desc: "从农耕到物理，总能接住孩子奇怪的问题。" },
+                { id: "a2", name: "教科书级控场能力", desc: "一个眼神让百人团队瞬间安静聚焦。" },
+                { id: "a3", name: "故事大王的表达力", desc: "把枯燥知识讲成精彩故事，孩子不想下课。" },
+                { id: "a4", name: "敏锐的教育洞察力", desc: "透过行为看到心理需求，懂得何时给予支架。" }
+            ]
+        },
+        B: {
+            name: "B级：锦上添花",
+            cost: 3,
+            color: "var(--color-b)",
+            desc: "魅力加分项。",
+            items: [
+                { id: "b1", name: "多才多艺技能包", desc: "会吉他/摄影/魔术，孩子眼中的全能偶像。" },
+                { id: "b2", name: "超高颜值亲和力", desc: "天生一张让人信任的脸，孩子愿意靠近。" },
+                { id: "b3", name: "社交牛逼症感染力", desc: "气氛组组长，有你在永远不会冷场。" },
+                { id: "b4", name: "强迫症般细节控", desc: "流程滴水不漏，让家长和合作方极其放心。" },
+                { id: "b5", name: "钢铁侠般体能", desc: "日行两万步连带七天团，依然精力充沛。" }
+            ]
+        },
+        N: {
+            name: "N级：负面特质 (代价)",
+            cost: -5, // 负数表示增加点数
+            color: "var(--color-n)",
+            desc: "致命缺点，换取额外点数。最多选2个。",
+            items: [
+                { id: "n1", name: "致命脸盲症", desc: "带团三天还分不清人。代价：学生无归属感。" },
+                { id: "n2", name: "严重知识偏科", desc: "不擅长领域靠瞎编。代价：误人子弟风险。" },
+                { id: "n3", name: "情绪不稳定炸弹", desc: "极度疲惫时会失控吼人。代价：摧毁安全感。" },
+                { id: "n4", name: "重度社恐患者", desc: "抗拒课下交流。代价：难建立深层关系。" }
+            ]
+        }
+    };
+
+    // --- 游戏状态 ---
+    let currentPoints = 30;
+    const selectedTraits = new Set(); // 存储已选特质的ID
+    const maxNegative = 2; // N级最大选择数
+
+    // --- 初始化渲染 ---
+    function initGame() {
+        const app = document.getElementById('app');
+        for (const tierKey in traitsDB) {
+            const tier = traitsDB[tierKey];
+            const section = document.createElement('div');
+            section.className = `tier-section tier-${tierKey.toLowerCase()}`;
+            
+            section.innerHTML = `
+                <div class="section-title" style="border-color: ${tier.color}">
+                    <span class="tier-badge" style="background: ${tier.color}">${tierKey}级</span>
+                    ${tier.name}
+                    <span style="margin-left: auto; font-size: 0.9em; color: ${tier.color}">
+                        ${tier.cost > 0 ? '消耗 ' + tier.cost : '获得 ' + Math.abs(tier.cost)} DP/个
+                    </span>
+                </div>
+                <p style="color: #666; font-size: 0.9em; margin-top: -10px; margin-bottom: 15px;">${tier.desc}</p>
+                <div class="traits-grid">
+                    ${tier.items.map(item => `
+                        <div class="trait-card" id="${item.id}" onclick="toggleTrait('${item.id}', '${tierKey}', ${tier.cost})">
+                            <div class="trait-header">
+                                <span class="trait-name">${item.name}</span>
+                                <span class="trait-cost ${tier.cost > 0 ? 'cost-pay' : 'cost-gain'}">
+                                    ${tier.cost > 0 ? '-' + tier.cost : '+' + Math.abs(tier.cost)}
+                                </span>
+                            </div>
+                            <div class="trait-desc">${item.desc}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            app.appendChild(section);
+        }
+        updateUI();
+    }
+
+    // --- 核心逻辑：切换特质选择 ---
+    function toggleTrait(id, tierKey, cost) {
+        const msgBox = document.getElementById('message-box');
+        msgBox.innerText = ""; // 清空提示
+
+        if (selectedTraits.has(id)) {
+            // 取消选择：返还点数
+            currentPoints += cost;
+            selectedTraits.delete(id);
+        } else {
+            // 尝试选择
+            // 规则1：检查N级数量限制
+            if (tierKey === 'N') {
+                let nCount = 0;
+                selectedTraits.forEach(tid => { if (tid.startsWith('n')) nCount++; });
+                if (nCount >= maxNegative) {
+                    msgBox.innerText = `⚠️ 规则限制：负面特质最多只能选择 ${maxNegative} 个！`;
+                    shakeUI(id); return;
+                }
+            }
+            // 规则2：检查点数是否足够
+            if (currentPoints < cost) {
+                msgBox.innerText = "⚠️ 天赋点不足，无法购买此特质！请先放弃其他特质。";
+                shakeUI(id); return;
+            }
+            // 扣除点数并选择
+            currentPoints -= cost;
+            selectedTraits.add(id);
+        }
+        updateUI();
+    }
+
+    // --- UI 更新 ---
+    function updateUI() {
+        // 更新点数显示
+        const pointsDisplay = document.getElementById('points-display');
+        pointsDisplay.innerText = currentPoints;
+        pointsDisplay.style.color = currentPoints < 5 ? '#d32f2f' : '#2196f3';
+
+        // 更新卡片样式
+        document.querySelectorAll('.trait-card').forEach(card => {
+            if (selectedTraits.has(card.id)) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+        });
+    }
+
+    // --- UI 特效：错误抖动 ---
+    function shakeUI(id) {
+        const card = document.getElementById(id);
+        card.style.transform = "translateX(5px)";
+        setTimeout(() => { card.style.transform = "translateX(-5px)"; }, 50);
+        setTimeout(() => { card.style.transform = "translateX(5px)"; }, 100);
+        setTimeout(() => { card.style.transform = "translateX(0)"; }, 150);
+    }
+
+    // --- 完成构建 ---
+    function finishBuild() {
+        const msgBox = document.getElementById('message-box');
+        let sCount = 0;
+        selectedTraits.forEach(id => { if (id.startsWith('s')) sCount++; });
+
+        if (sCount < 1) {
+            msgBox.innerText = "🚫 构建失败：S级核心基石至少必须选择 1 个！";
+            window.scrollTo(0, 0); // 滚动到顶部提示
+            return;
+        }
+
+        // 生成结果 HTML
+        let resultHTML = `<p><strong>剩余天赋点：</strong> <span style="color: #2196f3; font-weight:bold;">${currentPoints}</span></p>`;
+        resultHTML += `<h3>已选特质组合：</h3><ul class="result-list">`;
+        
+        // 按层级排序展示
+        const sortedIds = Array.from(selectedTraits).sort((a, b) => a.localeCompare(b));
+        
+        sortedIds.forEach(id => {
+            let tierChar = id.charAt(0).toUpperCase();
+            let traitName = "";
+            traitsDB[tierChar].items.forEach(item => { if(item.id === id) traitName = item.name; });
+            resultHTML += `<li class="result-item item-${tierChar.toLowerCase()}">[${tierChar}级] ${traitName}</li>`;
+        });
+        resultHTML += `</ul>`;
+        
+        resultHTML += `<p style="margin-top: 20px; color: #666; font-size: 0.9em;">* 这个组合代表了你在当前资源限制下，对研学导师核心价值的理解与取舍。</p>`;
+
+        document.getElementById('resultBody').innerHTML = resultHTML;
+        
+        // 显示弹窗
+        const modal = document.getElementById('resultModal');
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('show'), 10);
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('resultModal');
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+
+    // 启动游戏
+    initGame();
+
+</script>
+</body>
+</html>
